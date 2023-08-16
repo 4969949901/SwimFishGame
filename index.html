@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>fish swim</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="LibreriaRectangulo&Circulo.js"></script>
+</head>
+<body>
+  <!--CSS-->
+    <style>
+        body{
+            background: skyblue;
+            margin:0;
+            padding:0;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height: 100vh;
+
+        }
+    </style>
+<!--html-->
+
+<!--javascript-->
+<script>
+    const ancho_pantalla=1080
+    const alto_pantalla=520
+    const velocidad_suelo = 5
+    let canvas
+    let piso
+    let pez
+    let obstaculos = []
+    let caer = false
+    let puntos = 0
+    let font
+    let contaFotogramas=0
+
+
+    function setup(){
+        canvas=createCanvas(ancho_pantalla,alto_pantalla)
+        windowResized()
+        piso = new Piso()
+        pez =new Pez()
+        obstaculos.push(new Obstaculo())
+    }
+
+    function draw(){
+        background("dodgerblue")
+        for(const obstaculo of obstaculos){
+            obstaculo.dibujar()
+        }
+        piso.dibujar()
+        pez.dibujar()
+        if(contaFotogramas*velocidad_suelo%400==0){
+            obstaculos.push(new Obstaculo())
+        }
+        if(caer){
+            contaFotogramas++
+        }
+    }
+    function windowResized(){
+        if(windowWidth<ancho_pantalla){
+            canvas.style("transform",`scale(${windowWith/width})`)
+        }
+    }
+    function keyPressed(){
+        clic()
+    }
+
+    function mousePressed(){
+        clic()
+    }
+
+    function clic(){
+        if(caer){
+            pez.aceleracion.set(createVector(0,-5))
+        }else{
+            pez.resetearVariables()
+            caer=true
+            contaFotogramas=0
+            obstaculos=[]
+        }
+        
+    }
+    function perder(){
+        caer=false
+    }
+
+    function Obstaculo(){
+        const distancia_entre_obstaculos=150
+        this.w=100
+        this.h=600
+        this.x=width
+        let aleatorio=300*Math.random()-150
+        this.y=(height / 2)+aleatorio
+        this.y2=this.y - this.h -distancia_entre_obstaculos
+        this.dibujar=function(){
+            fill("red")
+            rect(this.x,this.y,this.w,this.h)
+            rect(this.x,this.y2,this.w,this.h)
+            if(caer){
+                this.x-=velocidad_suelo
+            }
+        }
+        this.areaColision=function(){
+            return [
+                new Rectangle(this.x,this.y,this.w,this.h),
+                new Rectangle(this.x,this.y2,this.w,this.h),
+            ]
+        }
+
+    }
+     
+
+    function Pez(){
+        this.r = 60
+        this.resetearVariables=function (){
+            this.pos= createVector(width/2, height/2)
+            this.aceleracion=createVector(0,0)
+        }
+        this.resetearVariables()
+        this.dibujar= function(){
+            fill("green")
+            circle(this.pos.x,this.pos.y,this.r)
+            if(caer){
+                this.aceleracion.add(createVector(0,0.2))
+                this.pos.add(this.aceleracion)
+            }
+            if (this.areaColision().collideRect(piso.areaColision())){
+               perder()
+            }
+            for (const obstaculo of obstaculos){
+                let colisiones=obstaculo.areaColision()
+                for (const c of colisiones){
+                    if(this.areaColision().collideRect(c)){
+                        perder()
+                    }
+                }
+            }
+          
+        }
+        this.areaColision=function(){
+            return new Circle(this.pos.x,this.pos.y,this.r)
+        }
+    }
+
+    function Piso(){
+        this.w=ancho_pantalla
+        this.h=100
+        this.x=0
+        this.y=alto_pantalla - this.h
+        this.dibujar=function(){
+            fill("purple")
+            rect(this.x, this.y, this.w,this.h)
+        }
+        this.areaColision=function(){
+            return new Rectangle(this.x,this.y,this.w,this.h)
+        }
+    }
+
+
+</script>
+
+</body>
+</html>
